@@ -25,3 +25,11 @@ __pycache__/
 
 # CTest transient output
 /Testing/
+*.namebak
+*.bak
+*.bak.*
+build-hybrid/
+*.namebak
+*.bak
+*.bak.*
+build-hybrid/

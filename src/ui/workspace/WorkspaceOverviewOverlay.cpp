@@ -197,7 +197,7 @@ struct RealmStyle {
 
 constexpr std::array<RealmStyle, 4> kRealms{{
     {
-        "I", "FIRE", "The Hearth", "Bairon Wykes",
+        "I", "FIRE", "The Hearth", "Ed Rothtaylor",
         "fire-the-hearth.png",
         "bairon-wykes.png",
         {1.0, 0.525, 0.271, 1.0},
@@ -213,7 +213,7 @@ constexpr std::array<RealmStyle, 4> kRealms{{
         780.0, -58.0, 430.0, -8.0, -36.0,
     },
     {
-        "III", "WIND", "Elshire Forest", "Aya Grephin",
+        "III", "WIND", "Elshire Forest", "Lortelle Kletchen",
         "wind-elshire-forest.png",
         "aya-grephin.png",
         {0.471, 0.843, 0.741, 1.0},
@@ -221,7 +221,7 @@ constexpr std::array<RealmStyle, 4> kRealms{{
         760.0, 4.0, 420.0, 15.0, -33.0,
     },
     {
-        "IV", "EARTH", "Vildorial", "Mica Earthborn",
+        "IV", "EARTH", "Vildorial", "Belle Maya",
         "earth-vildorial.png",
         "mica-earthborn.png",
         {0.820, 0.639, 0.373, 1.0},
