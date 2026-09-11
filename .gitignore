@@ -33,3 +33,4 @@ build-hybrid/
 *.bak
 *.bak.*
 build-hybrid/
+*.variantbak

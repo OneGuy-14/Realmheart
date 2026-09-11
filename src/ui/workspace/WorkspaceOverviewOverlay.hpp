@@ -89,6 +89,10 @@ private:
     struct RealmAssets {
         GdkTexture* background = nullptr;
         GdkTexture* character = nullptr;
+        // Path each texture came from, so a re-roll can skip reloading when
+        // the random pick lands on the same file.
+        std::string background_source{};
+        std::string character_source{};
         PangoLayout* roman_layout = nullptr;
         int roman_workspace_id = 0;
         PangoLayout* element_layout = nullptr;
@@ -167,6 +171,8 @@ private:
     bool rebuild_dirty_overlays();
     bool ensure_assets();
     void release_assets() noexcept;
+    // Re-pick art variants and reload only the textures that changed.
+    void reroll_variant_textures();
 
     int monitor_index_ = -1;
     GtkWindow* window_ = nullptr;

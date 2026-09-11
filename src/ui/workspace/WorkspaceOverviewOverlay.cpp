@@ -1061,6 +1061,37 @@ std::vector<std::string> basic_icon_candidates(std::string_view requested) {
     return candidates;
 }
 
+// Return a random file from "<stem>.variants/" beside the asset, or the
+// asset itself when that folder is absent or empty, so an install with no
+// variants behaves exactly as before.
+[[nodiscard]] std::filesystem::path pick_variant(
+    const std::filesystem::path& base
+) {
+    std::error_code ec;
+    std::filesystem::path dir = base;
+    dir.replace_extension();
+    dir += ".variants";
+    if (!std::filesystem::is_directory(dir, ec)) return base;
+
+    std::vector<std::filesystem::path> candidates;
+    for (const auto& entry : std::filesystem::directory_iterator(dir, ec)) {
+        if (ec) break;
+        if (!entry.is_regular_file(ec)) continue;
+        std::string ext = entry.path().extension().string();
+        for (char& c : ext) {
+            c = static_cast<char>(::tolower(static_cast<unsigned char>(c)));
+        }
+        if (ext == ".png" || ext == ".jpg" || ext == ".jpeg" || ext == ".webp") {
+            candidates.push_back(entry.path());
+        }
+    }
+    if (candidates.empty()) return base;
+
+    const gint32 pick =
+        g_random_int_range(0, static_cast<gint32>(candidates.size()));
+    return candidates[static_cast<std::size_t>(pick)];
+}
+
 [[nodiscard]] GdkTexture* load_texture(
     const std::filesystem::path& path,
     std::string& error_message
@@ -3065,6 +3096,7 @@ void WorkspaceOverviewOverlay::show() {
             gtk_widget_set_opacity(GTK_WIDGET(window_), 0.0);
             gtk_window_present(window_);
         }
+        reroll_variant_textures();
         static_cast<void>(ensure_assets());
         static_cast<void>(rebuild_dirty_overlays());
         stop_content_animations(true);
@@ -4819,6 +4851,52 @@ void WorkspaceOverviewOverlay::handle_hover(double x, double y) {
     if (realm.has_value()) select_realm(*realm);
 }
 
+void WorkspaceOverviewOverlay::reroll_variant_textures() {
+    // The first open is handled by ensure_assets(), which picks a variant
+    // itself; this only matters once textures are already loaded.
+    if (!assets_attempted_ || !asset_tier_selected_) return;
+
+    for (std::size_t index = 0; index < kRealms.size(); ++index) {
+        const auto background_path = resolve_project_asset(
+            workspace_overview_asset_path(
+                "backgrounds",
+                kRealms[index].background_stem,
+                asset_tier_
+            )
+        );
+        const auto character_path = resolve_project_asset(
+            workspace_overview_asset_path(
+                "characters",
+                kRealms[index].character_stem,
+                asset_tier_
+            )
+        );
+        if (!background_path || !character_path) continue;
+
+        const auto background_pick = pick_variant(*background_path);
+        if (background_pick.string() != assets_[index].background_source) {
+            std::string ignored;
+            GdkTexture* next = load_texture(background_pick, ignored);
+            if (next != nullptr) {
+                g_clear_object(&assets_[index].background);
+                assets_[index].background = next;
+                assets_[index].background_source = background_pick.string();
+            }
+        }
+
+        const auto character_pick = pick_variant(*character_path);
+        if (character_pick.string() != assets_[index].character_source) {
+            std::string ignored;
+            GdkTexture* next = load_texture(character_pick, ignored);
+            if (next != nullptr) {
+                g_clear_object(&assets_[index].character);
+                assets_[index].character = next;
+                assets_[index].character_source = character_pick.string();
+            }
+        }
+    }
+}
+
 bool WorkspaceOverviewOverlay::ensure_assets() {
     const auto selected_tier = assigned_asset_tier(
         window_ != nullptr ? GTK_WIDGET(window_) : nullptr,
@@ -4863,15 +4941,19 @@ bool WorkspaceOverviewOverlay::ensure_assets() {
             return false;
         }
 
+        const auto background_pick = pick_variant(*background_path);
+        const auto character_pick = pick_variant(*character_path);
         assets_[index].background = load_texture(
-            *background_path,
+            background_pick,
             asset_error_
         );
+        assets_[index].background_source = background_pick.string();
         if (assets_[index].background != nullptr) {
             assets_[index].character = load_texture(
-                *character_path,
+                character_pick,
                 asset_error_
             );
+            assets_[index].character_source = character_pick.string();
         }
         if (assets_[index].character != nullptr) {
             int roman_workspace_id = static_cast<int>(index) + 1;
@@ -4963,6 +5045,8 @@ void WorkspaceOverviewOverlay::release_assets() noexcept {
     for (auto& realm : assets_) {
         g_clear_object(&realm.background);
         g_clear_object(&realm.character);
+        realm.background_source.clear();
+        realm.character_source.clear();
         g_clear_object(&realm.roman_layout);
         realm.roman_workspace_id = 0;
         g_clear_object(&realm.element_layout);
