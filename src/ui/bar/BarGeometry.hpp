@@ -26,9 +26,9 @@ struct BarGeometry {
     int icon_button_extent = 0;
     int icon_size = 24;
     int launcher_icon_size = 32;
-    int system_pill_width = 0;
-    int system_pill_height = 0;
-    int system_metric_icon_size = 20;
+    int system_pill_width = 118;
+    int system_pill_height = 14;
+    int system_metric_icon_size = 16;
     int system_metrics_spacing = 8;
     int workspace_stack_width = 36;
     int workspace_stack_padding = 11;
@@ -69,9 +69,9 @@ struct BarGeometry {
         .icon_button_extent = s(40),
         .icon_size = s(24),
         .launcher_icon_size = s(32),
-        .system_pill_width = s(42),
-        .system_pill_height = s(118),
-        .system_metric_icon_size = s(20),
+        .system_pill_width = s(118),
+        .system_pill_height = s(14),
+        .system_metric_icon_size = s(16),
         .system_metrics_spacing = s(8),
         .workspace_stack_width = s(36),
         .workspace_stack_padding = s(11),
@@ -117,7 +117,9 @@ struct BarGeometry {
 ) noexcept {
     const auto display_tier = core::display_tier_for_logical_geometry(width, height);
     auto geometry = bar_geometry_for_display_tier(display_tier);
-    if (width > 0 && height > 0) geometry.surface_height = height;
+    // Horizontal bar: surface_height carries the length along the bar,
+    // which for a top-anchored surface is the monitor width.
+    if (width > 0 && height > 0) geometry.surface_height = width;
     return geometry;
 }
 

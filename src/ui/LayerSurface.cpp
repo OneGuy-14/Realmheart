@@ -100,8 +100,8 @@ LayerSurfaceSpec make_bar_surface_spec(int width) {
     spec.layer = LayerSurfaceLevel::Top;
     spec.keyboard_mode = LayerKeyboardMode::OnDemand;
     spec.anchor_left = true;
+    spec.anchor_right = true;
     spec.anchor_top = true;
-    spec.anchor_bottom = true;
     spec.exclusive_zone = std::max(width, 0);
     return spec;
 }

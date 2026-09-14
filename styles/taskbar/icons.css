@@ -173,3 +173,16 @@
 .realmheart-notification-unread .realmheart-bar-svg-icon {
   color: @rh_icon_primary;
 }
+
+/* Horizontal bar: the pill was authored 42 wide x 104 tall. */
+.realmheart-system-monitor-pill {
+  min-width: 104px;
+  min-height: 24px;
+  padding: 2px 8px;
+}
+
+/* A little more presence on the pill. */
+.realmheart-system-monitor-pill {
+  min-height: 30px;
+  padding: 4px 10px;
+}

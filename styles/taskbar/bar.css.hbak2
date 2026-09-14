@@ -1,0 +1,73 @@
+/* Realmheart taskbar shell and deliberate vertical rhythm. */
+
+/* The taskbar contour is the only deliberately non-Matugen colour. */
+@define-color rh_taskbar_gold #ffd66b;
+
+window.realmheart-vertical-bar-window,
+.realmheart-bar-root,
+.realmheart-bar-backdrop,
+.realmheart-bar-backdrop-fill,
+.realmheart-bar-backdrop-contour {
+  background-color: transparent;
+  background-image: none;
+  border: none;
+  box-shadow: none;
+}
+
+.realmheart-bar-backdrop-fill {
+  color: alpha(@rh_background, 0.94);
+}
+
+.realmheart-bar-backdrop-contour {
+  color: @rh_taskbar_gold;
+}
+
+.realmheart-vertical-bar {
+  background-color: transparent;
+  color: @rh_text;
+}
+
+/* GTK has no widget API for padding. Keep padding local to a per-surface tier
+   class so 1080p remains exactly the released composition while larger logical
+   outputs receive the same intentional inset scale. */
+.realmheart-vertical-bar.realmheart-bar-tier-1080p { padding: 13px 9px 13px 5px; }
+.realmheart-vertical-bar.realmheart-bar-tier-1440p { padding: 17px 12px 17px 7px; }
+.realmheart-vertical-bar.realmheart-bar-tier-4k { padding: 26px 18px 26px 10px; }
+
+/* Top zone: compact, centered icon rhythm instead of giant hand-spaced gaps. */
+.realmheart-bar-top-cluster {
+  border-spacing: 0;
+  margin: 0;
+}
+
+/* Workspace zone remains the visual centre of the rail. */
+.realmheart-workspace-section {
+  border-spacing: 0;
+}
+
+.realmheart-bar-separator {
+  min-height: 1px;
+  color: alpha(@rh_outline, 0.58);
+  background-color: alpha(@rh_outline, 0.58);
+}
+
+.realmheart-workspace-separator {
+  margin: 0;
+}
+
+/* Bottom zone mirrors the compact top rhythm while staying bottom-pinned. */
+.realmheart-bar-bottom-cluster {
+  border-spacing: 0;
+  margin: 0;
+}
+
+.realmheart-bar-clock {
+  color: @rh_text;
+  font-weight: 750;
+  font-size: 0.84em;
+  margin: 0 0 2px 0;
+}
+
+.realmheart-status-separator {
+  margin: 0;
+}

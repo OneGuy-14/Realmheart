@@ -8,6 +8,27 @@ namespace {
 constexpr double kQuarterEllipseKappa = 0.5522847498307936;
 constexpr double kContourWidth = 3.0;
 
+// The rail silhouette is authored vertically: x is the rail axis, y the
+// length axis. For a top-anchored bar the whole path is transposed with
+// (x,y) -> (y,x) rather than re-authoring every curve.
+constexpr bool kHorizontalBar = true;
+
+void apply_bar_transpose(cairo_t* cr) {
+    if (!kHorizontalBar) return;
+    cairo_matrix_t transpose;
+    cairo_matrix_init(&transpose, 0.0, 1.0, 1.0, 0.0, 0.0, 0.0);
+    cairo_transform(cr, &transpose);
+}
+
+// Extent across the rail, and along its length, for the current orientation.
+inline int bar_cross_extent(int width, int height) {
+    return kHorizontalBar ? height : width;
+}
+
+inline int bar_length_extent(int width, int height) {
+    return kHorizontalBar ? width : height;
+}
+
 struct BackdropState {
     GWeakRef window_ref{};
     int rail_width = 0;
@@ -161,12 +182,17 @@ void draw_fill(
     gpointer raw
 ) {
     const auto& state = *static_cast<BackdropState*>(raw);
-    const auto geometry = geometry_for(state, width, height);
+    const int cross = bar_cross_extent(width, height);
+    const int along = bar_length_extent(width, height);
+    const auto geometry = geometry_for(state, cross, along);
 
     GdkRGBA fill{};
     gtk_widget_get_color(GTK_WIDGET(area), &fill);
     cairo_set_source_rgba(cr, fill.red, fill.green, fill.blue, fill.alpha);
-    append_fill_path(cr, geometry, height);
+    cairo_save(cr);
+    apply_bar_transpose(cr);
+    append_fill_path(cr, geometry, along);
+    cairo_restore(cr);
     cairo_fill(cr);
 }
 
@@ -178,7 +204,9 @@ void draw_contour(
     gpointer raw
 ) {
     const auto& state = *static_cast<BackdropState*>(raw);
-    const auto geometry = geometry_for(state, width, height);
+    const int cross = bar_cross_extent(width, height);
+    const int along = bar_length_extent(width, height);
+    const auto geometry = geometry_for(state, cross, along);
 
     GdkRGBA contour{};
     gtk_widget_get_color(GTK_WIDGET(area), &contour);
@@ -186,12 +214,15 @@ void draw_contour(
     cairo_set_line_width(cr, kContourWidth);
     cairo_set_line_cap(cr, CAIRO_LINE_CAP_BUTT);
     cairo_set_line_join(cr, CAIRO_LINE_JOIN_ROUND);
+    cairo_save(cr);
+    apply_bar_transpose(cr);
     append_contour_path(
         cr,
         geometry,
-        height,
+        along,
         state.top_contour_occlusion_bottom
     );
+    cairo_restore(cr);
     cairo_stroke(cr);
 }
 
@@ -206,14 +237,19 @@ void update_input_region(BackdropState& state, int width, int height) {
         return;
     }
 
-    const auto geometry = geometry_for(state, width, height);
+    const auto geometry = geometry_for(
+        state,
+        bar_cross_extent(width, height),
+        bar_length_extent(width, height)
+    );
     cairo_region_t* region = cairo_region_create();
 
+    // Only the straight rail takes input; transposed for a top bar.
     const cairo_rectangle_int_t rail_rectangle{
         .x = 0,
         .y = 0,
-        .width = static_cast<int>(geometry.rail),
-        .height = height,
+        .width = kHorizontalBar ? width : static_cast<int>(geometry.rail),
+        .height = kHorizontalBar ? static_cast<int>(geometry.rail) : height,
     };
     cairo_region_union_rectangle(region, &rail_rectangle);
 
@@ -246,7 +282,7 @@ BarBackdrop::BarBackdrop(
 
     widget_ = gtk_overlay_new();
     gtk_widget_add_css_class(widget_, "realmheart-bar-backdrop");
-    gtk_widget_set_size_request(widget_, state->visual_width, -1);
+    gtk_widget_set_size_request(widget_, -1, state->visual_width);
     gtk_widget_set_hexpand(widget_, TRUE);
     gtk_widget_set_vexpand(widget_, TRUE);
     g_object_set_data_full(
@@ -294,7 +330,7 @@ void BarBackdrop::set_geometry(int rail_width, int visual_width, int curve_heigh
     state->rail_width = std::max(rail_width, 0);
     state->visual_width = std::max(visual_width, state->rail_width);
     state->curve_height = std::max(curve_height, 0);
-    gtk_widget_set_size_request(widget_, state->visual_width, -1);
+    gtk_widget_set_size_request(widget_, -1, state->visual_width);
     gtk_widget_queue_resize(widget_);
     gtk_widget_queue_draw(widget_);
 }

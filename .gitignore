@@ -34,3 +34,5 @@ build-hybrid/
 *.bak.*
 build-hybrid/
 *.variantbak
+*.hbak
+*.horizbak

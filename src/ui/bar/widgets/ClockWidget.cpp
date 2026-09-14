@@ -24,7 +24,8 @@ void ClockWidget::update_time() {
     std::tm local_time{};
     localtime_r(&now, &local_time);
     char buffer[16]{};
-    std::strftime(buffer, sizeof(buffer), "%I:%M\n%p", &local_time);
+    // Horizontal bar: no need to stack AM/PM onto a second line.
+    std::strftime(buffer, sizeof(buffer), "%I:%M %p", &local_time);
     std::string formatted(buffer);
     if (formatted.starts_with('0')) formatted.erase(formatted.begin());
     gtk_label_set_text(GTK_LABEL(label_), formatted.c_str());

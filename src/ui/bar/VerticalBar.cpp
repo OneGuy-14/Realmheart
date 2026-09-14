@@ -26,13 +26,13 @@ void clear_box(GtkWidget* box) {
 }
 
 GtkWidget* create_section_separator(const char* role_class, int width) {
-    GtkWidget* separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    GtkWidget* separator = gtk_separator_new(GTK_ORIENTATION_VERTICAL);
     gtk_widget_add_css_class(separator, "realmheart-bar-separator");
     if (role_class != nullptr && *role_class != '\0') {
         gtk_widget_add_css_class(separator, role_class);
     }
-    gtk_widget_set_halign(separator, GTK_ALIGN_CENTER);
-    gtk_widget_set_size_request(separator, width, 1);
+    gtk_widget_set_valign(separator, GTK_ALIGN_CENTER);
+    gtk_widget_set_size_request(separator, 1, width);
     return separator;
 }
 
@@ -237,14 +237,14 @@ void VerticalBar::apply_geometry() {
 
     gtk_window_set_default_size(
         GTK_WINDOW(window_),
-        geometry_.visual_width,
-        geometry_.surface_height
+        geometry_.surface_height,
+        geometry_.visual_width
     );
     if (content_container_ != nullptr) {
         gtk_widget_set_size_request(
             content_container_,
-            geometry_.rail_width,
-            geometry_.surface_height
+            geometry_.surface_height,
+            geometry_.rail_width
         );
         gtk_widget_queue_resize(content_container_);
     }
@@ -266,7 +266,7 @@ void VerticalBar::apply_layout_metrics() {
 
     if (content_container_ != nullptr) {
         gtk_widget_set_size_request(
-            content_container_, geometry_.rail_width, geometry_.surface_height
+            content_container_, geometry_.surface_height, geometry_.rail_width
         );
 
         // GtkWidget has margin setters but no runtime padding setter. Margin is
@@ -296,11 +296,11 @@ void VerticalBar::apply_layout_metrics() {
 
     if (top_cluster_ != nullptr) {
         gtk_box_set_spacing(GTK_BOX(top_cluster_), geometry_.top_cluster_spacing);
-        gtk_widget_set_margin_top(top_cluster_, geometry_.top_cluster_margin_top);
+        gtk_widget_set_margin_start(top_cluster_, geometry_.top_cluster_margin_top);
     }
     if (bottom_cluster_ != nullptr) {
         gtk_box_set_spacing(GTK_BOX(bottom_cluster_), geometry_.bottom_cluster_spacing);
-        gtk_widget_set_margin_bottom(
+        gtk_widget_set_margin_end(
             bottom_cluster_, geometry_.bottom_cluster_margin_bottom
         );
     }
@@ -308,13 +308,13 @@ void VerticalBar::apply_layout_metrics() {
         gtk_box_set_spacing(GTK_BOX(workspace_region_), geometry_.workspace_section_spacing);
     }
     if (workspace_box_ != nullptr) {
-        gtk_widget_set_size_request(workspace_box_, geometry_.workspace_stack_width, -1);
+        gtk_widget_set_size_request(workspace_box_, -1, geometry_.workspace_stack_width);
     }
     if (workspace_runes_container_ != nullptr) {
-        gtk_widget_set_margin_top(
+        gtk_widget_set_margin_start(
             workspace_runes_container_, geometry_.workspace_stack_padding
         );
-        gtk_widget_set_margin_bottom(
+        gtk_widget_set_margin_end(
             workspace_runes_container_, geometry_.workspace_stack_padding
         );
         gtk_box_set_spacing(
@@ -325,21 +325,21 @@ void VerticalBar::apply_layout_metrics() {
         workspace_top_separator_, workspace_bottom_separator_, status_separator_
     }) {
         if (separator != nullptr) {
-            gtk_widget_set_size_request(separator, geometry_.separator_width, 1);
+            gtk_widget_set_size_request(separator, 1, geometry_.separator_width);
         }
     }
     if (status_separator_ != nullptr) {
-        gtk_widget_set_margin_bottom(
+        gtk_widget_set_margin_end(
             status_separator_, geometry_.status_separator_bottom_margin
         );
     }
     if (notification_button_ != nullptr) {
-        gtk_widget_set_margin_bottom(
+        gtk_widget_set_margin_end(
             notification_button_->widget(), geometry_.notification_bottom_margin
         );
     }
     if (bottom_action_button_ != nullptr) {
-        gtk_widget_set_margin_bottom(
+        gtk_widget_set_margin_end(
             bottom_action_button_->widget(), geometry_.bottom_action_bottom_margin
         );
     }
@@ -385,26 +385,26 @@ void VerticalBar::setup_layout() {
     content_container_ = gtk_center_box_new();
     gtk_orientable_set_orientation(
         GTK_ORIENTABLE(content_container_),
-        GTK_ORIENTATION_VERTICAL
+        GTK_ORIENTATION_HORIZONTAL
     );
     gtk_widget_add_css_class(content_container_, "realmheart-vertical-bar");
     gtk_widget_add_css_class(content_container_, "realmheart-bar-tier-1080p");
     gtk_widget_set_size_request(
         content_container_,
-        geometry_.rail_width,
-        geometry_.surface_height
+        geometry_.surface_height,
+        geometry_.rail_width
     );
-    gtk_widget_set_halign(content_container_, GTK_ALIGN_START);
-    gtk_widget_set_valign(content_container_, GTK_ALIGN_FILL);
-    gtk_widget_set_vexpand(content_container_, TRUE);
+    gtk_widget_set_halign(content_container_, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(content_container_, GTK_ALIGN_START);
+    gtk_widget_set_hexpand(content_container_, TRUE);
     gtk_overlay_add_overlay(GTK_OVERLAY(root_overlay_), content_container_);
 
-    workspace_box_ = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    workspace_box_ = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_add_css_class(workspace_box_, "realmheart-workspace-stack");
     gtk_widget_set_halign(workspace_box_, GTK_ALIGN_CENTER);
     gtk_widget_set_valign(workspace_box_, GTK_ALIGN_CENTER);
-    workspace_runes_container_ = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
-    gtk_widget_set_halign(workspace_runes_container_, GTK_ALIGN_CENTER);
+    workspace_runes_container_ = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_widget_set_valign(workspace_runes_container_, GTK_ALIGN_CENTER);
     gtk_box_append(GTK_BOX(workspace_box_), workspace_runes_container_);
 
     // The pill itself is the right-click target for the workspace overview,
@@ -425,9 +425,9 @@ void VerticalBar::setup_layout() {
     }), this);
     gtk_widget_add_controller(workspace_box_, GTK_EVENT_CONTROLLER(pill_right_click));
 
-    workspace_region_ = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    workspace_region_ = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_add_css_class(workspace_region_, "realmheart-workspace-section");
-    gtk_widget_set_halign(workspace_region_, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(workspace_region_, GTK_ALIGN_CENTER);
     workspace_top_separator_ = create_section_separator(
         "realmheart-workspace-separator", geometry_.separator_width
     );
@@ -548,16 +548,16 @@ void VerticalBar::populate_widgets() {
     );
     bottom_action_button_->add_css_class("realmheart-bottom-action-button");
 
-    top_cluster_ = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    top_cluster_ = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_add_css_class(top_cluster_, "realmheart-bar-top-cluster");
-    gtk_widget_set_halign(top_cluster_, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(top_cluster_, GTK_ALIGN_CENTER);
     gtk_box_append(GTK_BOX(top_cluster_), launcher_button_->widget());
     gtk_box_append(GTK_BOX(top_cluster_), media_widget_->widget());
     gtk_box_append(GTK_BOX(top_cluster_), system_monitor_widget_->widget());
 
-    bottom_cluster_ = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    bottom_cluster_ = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_widget_add_css_class(bottom_cluster_, "realmheart-bar-bottom-cluster");
-    gtk_widget_set_halign(bottom_cluster_, GTK_ALIGN_CENTER);
+    gtk_widget_set_valign(bottom_cluster_, GTK_ALIGN_CENTER);
     gtk_box_append(GTK_BOX(bottom_cluster_), clock_->widget());
     status_separator_ = create_section_separator(
         "realmheart-status-separator", geometry_.separator_width
