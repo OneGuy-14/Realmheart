@@ -3,24 +3,19 @@
 #include <algorithm>
 #include <cmath>
 
-#include "ui/bar/BarGeometry.hpp"
-
 namespace realmheart::ui::workspace {
 
 struct WorkspaceOverviewViewportTransform {
     double scale = 1.0;
     double content_width = 1920.0;
     double content_height = 1080.0;
-    // Widget-space y of the stage top. Non-zero when a horizontal bar
-    // reserves the top of the output.
-    double origin_y = 0.0;
 
     [[nodiscard]] double to_reference_x(double x) const noexcept {
         return x / scale;
     }
 
     [[nodiscard]] double to_reference_y(double y) const noexcept {
-        return (y - origin_y) / scale;
+        return y / scale;
     }
 
     [[nodiscard]] double to_widget_x(double x) const noexcept {
@@ -28,7 +23,7 @@ struct WorkspaceOverviewViewportTransform {
     }
 
     [[nodiscard]] double to_widget_y(double y) const noexcept {
-        return y * scale + origin_y;
+        return y * scale;
     }
 };
 
@@ -49,31 +44,16 @@ workspace_overview_viewport_transform(
     // ultrawide outputs gain horizontal breathing room instead of stretching
     // every realm, card and character.  Keep the stage top-left anchored so
     // its Aether Spine morph coordinates continue to line up with the bar.
-    // A horizontal bar reserves the top of the output. Fit the stage into
-    // what is left and push it below the bar, or the first rows draw under
-    // it while dead space collects at the bottom.
-    const double top_inset = static_cast<double>(
-        bar::bar_geometry_for_logical_geometry(
-            logical_width, logical_height
-        ).visual_width
-    );
-    const double usable_height =
-        std::max(static_cast<double>(logical_height) - top_inset, 1.0);
-
     const double scale = std::min(
         static_cast<double>(logical_width) / reference_width,
-        usable_height / reference_height
+        static_cast<double>(logical_height) / reference_height
     );
     if (!std::isfinite(scale) || scale <= 0.0) return {};
 
-    const double content_height = reference_height * scale;
     return {
         .scale = scale,
         .content_width = reference_width * scale,
-        .content_height = content_height,
-        // Sit directly under the bar; let all the 16:9-into-3:2 slack
-        // collect in one gap at the bottom rather than two thin ones.
-        .origin_y = top_inset,
+        .content_height = reference_height * scale,
     };
 }
 
