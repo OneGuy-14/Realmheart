@@ -3799,9 +3799,11 @@ void WorkspaceOverviewOverlay::snapshot(
 
     gtk_snapshot_save(snapshot);
     // Push the stage below a horizontal bar before scaling into it.
-    if (viewport.origin_y != 0.0) {
-        const graphene_point_t stage_origin =
-            GRAPHENE_POINT_INIT(0.0F, static_cast<float>(viewport.origin_y));
+    if (viewport.origin_y != 0.0 || viewport.origin_x != 0.0) {
+        const graphene_point_t stage_origin = GRAPHENE_POINT_INIT(
+            static_cast<float>(viewport.origin_x),
+            static_cast<float>(viewport.origin_y)
+        );
         gtk_snapshot_translate(snapshot, &stage_origin);
     }
     gtk_snapshot_scale(

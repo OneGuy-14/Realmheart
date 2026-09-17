@@ -14,9 +14,13 @@ struct WorkspaceOverviewViewportTransform {
     // Widget-space y of the stage top. Non-zero when a horizontal bar
     // reserves the top of the output.
     double origin_y = 0.0;
+    // Widget-space x of the stage left edge. Non-zero when the stage is
+    // narrower than the output, which happens once height is the limiting
+    // dimension.
+    double origin_x = 0.0;
 
     [[nodiscard]] double to_reference_x(double x) const noexcept {
-        return x / scale;
+        return (x - origin_x) / scale;
     }
 
     [[nodiscard]] double to_reference_y(double y) const noexcept {
@@ -24,7 +28,7 @@ struct WorkspaceOverviewViewportTransform {
     }
 
     [[nodiscard]] double to_widget_x(double x) const noexcept {
-        return x * scale;
+        return x * scale + origin_x;
     }
 
     [[nodiscard]] double to_widget_y(double y) const noexcept {
@@ -55,11 +59,14 @@ workspace_overview_viewport_transform(
     const double top_inset = static_cast<double>(
         bar::bar_geometry_for_logical_geometry(
             logical_width, logical_height
-        ).visual_width
+        ).rail_width
     );
     const double usable_height =
         std::max(static_cast<double>(logical_height) - top_inset, 1.0);
 
+    // Scale on width alone: losing height to the bar would otherwise shrink
+    // the stage sideways too, leaving visible slack on a 16:9 output. The
+    // overflow falls off the bottom, which is quieter than side gaps.
     const double scale = std::min(
         static_cast<double>(logical_width) / reference_width,
         usable_height / reference_height
@@ -67,13 +74,20 @@ workspace_overview_viewport_transform(
     if (!std::isfinite(scale) || scale <= 0.0) return {};
 
     const double content_height = reference_height * scale;
+    const double content_width = reference_width * scale;
     return {
         .scale = scale,
-        .content_width = reference_width * scale,
+        .content_width = content_width,
         .content_height = content_height,
         // Sit directly under the bar; let all the 16:9-into-3:2 slack
         // collect in one gap at the bottom rather than two thin ones.
         .origin_y = top_inset,
+        // Centre horizontally. When height is the limiting dimension the
+        // stage is narrower than the output, and left-anchoring pools every
+        // spare pixel on the right - visible on a 16:9 external monitor.
+        .origin_x = std::max(
+            (static_cast<double>(logical_width) - content_width) * 0.5, 0.0
+        ),
     };
 }
 
