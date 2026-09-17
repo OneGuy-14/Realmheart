@@ -136,36 +136,6 @@ WallpaperDiscovery WallpaperLibrary::discover(std::filesystem::path root) const 
                     "ignored unsupported or corrupt image: " + path.string()
                 );
             }
-        } else if (!regular && std::filesystem::is_directory(path, type_error)) {
-            // Character folders: list the folder's first image as its cover so
-            // the picker shows one entry per character instead of every
-            // wallpaper they own. Selecting it identifies the character; the
-            // rotator cycles the rest of that folder.
-            std::error_code sub_error;
-            std::filesystem::directory_iterator sub(
-                path,
-                std::filesystem::directory_options::skip_permission_denied,
-                sub_error
-            );
-            if (!sub_error) {
-                std::filesystem::path cover;
-                const std::filesystem::directory_iterator sub_end;
-                while (sub != sub_end) {
-                    const std::filesystem::path child = sub->path();
-                    std::error_code child_error;
-                    const bool child_regular =
-                        std::filesystem::is_regular_file(child, child_error);
-                    if (!child_error && child_regular &&
-                        supported_extension(child.extension().string()) &&
-                        plausible_image(child) &&
-                        (cover.empty() || child < cover)) {
-                        cover = child;
-                    }
-                    sub.increment(sub_error);
-                    if (sub_error) break;
-                }
-                if (!cover.empty()) result.paths.push_back(cover);
-            }
         }
 
         iterator.increment(error);
